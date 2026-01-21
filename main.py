@@ -156,11 +156,29 @@ def download_proxy_links(repos: List[str]) -> List[str]:
     
     for repo_url in repos:
         try:
-            response = requests.get(repo_url, timeout=10)
+            # Basic URL validation
+            if not repo_url.startswith(('http://', 'https://')):
+                print(f"Invalid URL scheme: {repo_url}")
+                continue
+            
+            # Download with size limit (5MB max)
+            response = requests.get(repo_url, timeout=10, stream=True)
             response.raise_for_status()
             
+            # Read with size limit
+            content = ""
+            size = 0
+            max_size = 5 * 1024 * 1024  # 5MB
+            
+            for chunk in response.iter_content(chunk_size=8192, decode_unicode=True):
+                if chunk:
+                    size += len(chunk)
+                    if size > max_size:
+                        print(f"Repository {repo_url} exceeds size limit")
+                        break
+                    content += chunk
+            
             # Parse the content - assuming it contains vmess:// links
-            content = response.text
             for line in content.split('\n'):
                 line = line.strip()
                 if line.startswith('vmess://'):
@@ -376,4 +394,6 @@ async def get_status():
 
 if __name__ == "__main__":
     import uvicorn
+    # NOTE: For production, bind to 127.0.0.1 only or add authentication
+    # Current binding (0.0.0.0) exposes the service to the network
     uvicorn.run(app, host="0.0.0.0", port=8000)
