@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# V2Ray specific
+config/config.json
+v2ray
+v2ray.exe
+*.dat
+geoip.dat
+geosite.dat
